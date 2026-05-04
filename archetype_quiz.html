@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Brand Archetype Quiz</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f9f9f7; color: #1a1a1a; min-height: 100vh; display: flex; justify-content: center; padding: 2rem 1rem; }
+  #app { width: 100%; max-width: 640px; }
+  h1 { font-size: 22px; font-weight: 500; margin-bottom: 0.25rem; }
+  .subtitle { font-size: 15px; color: #666; margin-bottom: 2rem; line-height: 1.5; }
+  .progress-bar { height: 4px; background: #e5e5e5; border-radius: 2px; margin-bottom: 2rem; }
+  .progress-fill { height: 100%; background: #7F77DD; border-radius: 2px; transition: width 0.4s ease; }
+  .step { display: none; }
+  .step.active { display: block; }
+  .q-label { font-size: 12px; font-weight: 500; color: #999; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.5rem; }
+  .q-text { font-size: 18px; font-weight: 500; color: #1a1a1a; line-height: 1.5; margin-bottom: 1.5rem; }
+  .options { display: flex; flex-direction: column; gap: 10px; }
+  .opt { background: #fff; border: 0.5px solid #ddd; border-radius: 12px; padding: 14px 16px; cursor: pointer; font-size: 15px; color: #1a1a1a; text-align: left; transition: border-color 0.15s, background 0.15s; line-height: 1.4; font-family: inherit; }
+  .opt:hover { border-color: #7F77DD; background: #f8f7ff; }
+  .opt.selected { border-color: #7F77DD; background: #EEEDFE; color: #3C3489; }
+  .nav { display: flex; gap: 10px; margin-top: 1.5rem; }
+  .btn { border: 0.5px solid #ccc; background: transparent; border-radius: 8px; padding: 9px 20px; font-size: 14px; color: #1a1a1a; cursor: pointer; font-family: inherit; transition: background 0.15s; }
+  .btn:hover { background: #f5f5f3; }
+  .btn.primary { background: #7F77DD; color: #fff; border-color: #7F77DD; font-weight: 500; }
+  .btn.primary:hover { background: #534AB7; border-color: #534AB7; }
+  .btn:disabled { opacity: 0.35; cursor: not-allowed; }
+  .result { display: none; }
+  .result.active { display: block; }
+  .archetype-badge { display: inline-block; background: #EEEDFE; color: #3C3489; font-size: 13px; font-weight: 500; padding: 4px 14px; border-radius: 20px; margin-bottom: 1rem; }
+  .archetype-name { font-size: 28px; font-weight: 500; color: #1a1a1a; margin-bottom: 0.5rem; }
+  .archetype-tagline { font-size: 15px; color: #555; margin-bottom: 1.5rem; line-height: 1.6; }
+  .section-title { font-size: 12px; font-weight: 500; color: #999; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.75rem; }
+  .trait-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 1.5rem; }
+  .chip { font-size: 13px; background: #f5f5f3; border: 0.5px solid #e5e5e5; border-radius: 20px; padding: 4px 12px; color: #555; }
+  .biz-card { background: #f5f5f3; border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 10px; }
+  .biz-title { font-size: 14px; font-weight: 500; color: #1a1a1a; margin-bottom: 4px; }
+  .biz-desc { font-size: 13px; color: #666; line-height: 1.5; }
+  .voice-card { background: #f5f5f3; border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 1rem; font-size: 14px; color: #555; line-height: 1.6; }
+  .divider { border: none; border-top: 0.5px solid #e5e5e5; margin: 1.5rem 0; }
+  .restart-btn { width: 100%; margin-top: 0.5rem; }
+  @media (prefers-color-scheme: dark) {
+    body { background: #1a1a1a; color: #f0f0f0; }
+    .opt { background: #2a2a2a; border-color: #444; color: #f0f0f0; }
+    .opt:hover { background: #2e2c42; border-color: #7F77DD; }
+    .opt.selected { background: #26215C; color: #CECBF6; border-color: #7F77DD; }
+    .btn { border-color: #444; color: #f0f0f0; }
+    .btn:hover { background: #2a2a2a; }
+    .archetype-name { color: #f0f0f0; }
+    .chip { background: #2a2a2a; border-color: #444; color: #aaa; }
+    .biz-card, .voice-card { background: #2a2a2a; }
+    .biz-title { color: #f0f0f0; }
+    .biz-desc, .voice-card { color: #aaa; }
+    .archetype-tagline { color: #bbb; }
+    .progress-bar { background: #333; }
+    .divider { border-color: #333; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <h1>Brand archetype quiz</h1>
+  <p class="subtitle">7 questions to discover your archetype — and what it means for your business and personal brand.</p>
+  <div class="progress-bar"><div class="progress-fill" id="prog" style="width:0%"></div></div>
+
+  <div class="step active" id="s1">
+    <div class="q-label">Question 1 of 7</div>
+    <div class="q-text">Imagine your business as a person walking into a room. What do people feel when they see this person?</div>
+    <div class="options">
+      <button class="opt" data-q="1" data-v="innocent">Warmth and safety — like coming home</button>
+      <button class="opt" data-q="1" data-v="explorer">Curiosity and adventure — where have they been?</button>
+      <button class="opt" data-q="1" data-v="sage">Respect and depth — they clearly know things</button>
+      <button class="opt" data-q="1" data-v="hero">Energy and inspiration — let's get to work</button>
+      <button class="opt" data-q="1" data-v="rebel">Disruption — is this person about to shake things up?</button>
+      <button class="opt" data-q="1" data-v="magician">Wonder — how do they do that?</button>
+      <button class="opt" data-q="1" data-v="lover">Desire and beauty — I want what they have</button>
+      <button class="opt" data-q="1" data-v="jester">Fun and joy — the energy just lifted</button>
+      <button class="opt" data-q="1" data-v="everyman">Ease — just a real, relatable human</button>
+      <button class="opt" data-q="1" data-v="caregiver">Care — they'll look after you</button>
+      <button class="opt" data-q="1" data-v="ruler">Authority — someone important just arrived</button>
+      <button class="opt" data-q="1" data-v="creator">Originality — something new is about to exist</button>
+    </div>
+    <div class="nav"><button class="btn primary" id="n1" disabled onclick="next(1)">Next →</button></div>
+  </div>
+
+  <div class="step" id="s2">
+    <div class="q-label">Question 2 of 7</div>
+    <div class="q-text">What is the deepest fear that drives you in your work — the thing you never want to happen?</div>
+    <div class="options">
+      <button class="opt" data-q="2" data-v="innocent">That things turn out badly or I do something wrong</button>
+      <button class="opt" data-q="2" data-v="explorer">Being trapped, bored, or like everyone else</button>
+      <button class="opt" data-q="2" data-v="sage">Being deceived or spreading wrong information</button>
+      <button class="opt" data-q="2" data-v="hero">Weakness — giving up or being seen as incompetent</button>
+      <button class="opt" data-q="2" data-v="rebel">Being controlled, silenced, or having to conform</button>
+      <button class="opt" data-q="2" data-v="magician">Unintended consequences — power used the wrong way</button>
+      <button class="opt" data-q="2" data-v="lover">Being unwanted, unloved, or losing connection</button>
+      <button class="opt" data-q="2" data-v="jester">Boredom — a world without laughter or lightness</button>
+      <button class="opt" data-q="2" data-v="everyman">Standing out too much, being seen as elitist</button>
+      <button class="opt" data-q="2" data-v="caregiver">Selfishness — neglecting others who need help</button>
+      <button class="opt" data-q="2" data-v="ruler">Chaos — things falling apart without structure</button>
+      <button class="opt" data-q="2" data-v="creator">Mediocrity — building something ordinary</button>
+    </div>
+    <div class="nav">
+      <button class="btn" onclick="back(2)">← Back</button>
+      <button class="btn primary" id="n2" disabled onclick="next(2)">Next →</button>
+    </div>
+  </div>
+
+  <div class="step" id="s3">
+    <div class="q-label">Question 3 of 7</div>
+    <div class="q-text">Your ideal customer just got results from working with you. What did they gain?</div>
+    <div class="options">
+      <button class="opt" data-q="3" data-v="innocent">Peace of mind — simplicity, purity, goodness</button>
+      <button class="opt" data-q="3" data-v="explorer">A new experience, perspective, or identity</button>
+      <button class="opt" data-q="3" data-v="sage">Knowledge, clarity, and real understanding</button>
+      <button class="opt" data-q="3" data-v="hero">Achievement — they overcame something hard</button>
+      <button class="opt" data-q="3" data-v="rebel">Freedom — broke the rules that were holding them back</button>
+      <button class="opt" data-q="3" data-v="magician">Transformation — their life or results changed completely</button>
+      <button class="opt" data-q="3" data-v="lover">Deep connection, beauty, and sensory pleasure</button>
+      <button class="opt" data-q="3" data-v="jester">Joy, play, and a lighter way of seeing things</button>
+      <button class="opt" data-q="3" data-v="everyman">Belonging — they feel seen and not alone</button>
+      <button class="opt" data-q="3" data-v="caregiver">Healing, support, and feeling truly cared for</button>
+      <button class="opt" data-q="3" data-v="ruler">Control, status, and high-quality results</button>
+      <button class="opt" data-q="3" data-v="creator">A unique expression of themselves or their vision</button>
+    </div>
+    <div class="nav">
+      <button class="btn" onclick="back(3)">← Back</button>
+      <button class="btn primary" id="n3" disabled onclick="next(3)">Next →</button>
+    </div>
+  </div>
+
+  <div class="step" id="s4">
+    <div class="q-label">Question 4 of 7</div>
+    <div class="q-text">Pick the sentence that feels most like you:</div>
+    <div class="options">
+      <button class="opt" data-q="4" data-v="innocent">"Keep it simple, honest, and good."</button>
+      <button class="opt" data-q="4" data-v="explorer">"Don't follow the path — make your own."</button>
+      <button class="opt" data-q="4" data-v="sage">"The truth will set you free."</button>
+      <button class="opt" data-q="4" data-v="hero">"Where there's a will, there's a way."</button>
+      <button class="opt" data-q="4" data-v="rebel">"Rules are made to be broken."</button>
+      <button class="opt" data-q="4" data-v="magician">"If you can dream it, you can make it real."</button>
+      <button class="opt" data-q="4" data-v="lover">"You deserve beauty and pleasure in your life."</button>
+      <button class="opt" data-q="4" data-v="jester">"Don't take life too seriously."</button>
+      <button class="opt" data-q="4" data-v="everyman">"We're all in this together."</button>
+      <button class="opt" data-q="4" data-v="caregiver">"Love your neighbor as yourself."</button>
+      <button class="opt" data-q="4" data-v="ruler">"Power and responsibility go hand in hand."</button>
+      <button class="opt" data-q="4" data-v="creator">"Make something the world has never seen."</button>
+    </div>
+    <div class="nav">
+      <button class="btn" onclick="back(4)">← Back</button>
+      <button class="btn primary" id="n4" disabled onclick="next(4)">Next →</button>
+    </div>
+  </div>
+
+  <div class="step" id="s5">
+    <div class="q-label">Question 5 of 7</div>
+    <div class="q-text">How do you feel about money and wealth in the context of your work?</div>
+    <div class="options">
+      <button class="opt" data-q="5" data-v="innocent">Money is fine as long as things stay honest and good</button>
+      <button class="opt" data-q="5" data-v="explorer">Money buys freedom — it's a tool, not a goal</button>
+      <button class="opt" data-q="5" data-v="sage">Money follows value — focus on expertise, it comes</button>
+      <button class="opt" data-q="5" data-v="hero">I'll earn it through hard work and results</button>
+      <button class="opt" data-q="5" data-v="rebel">I'd rather disrupt the industry than play the money game</button>
+      <button class="opt" data-q="5" data-v="magician">Abundance is a mindset — I attract it by creating value</button>
+      <button class="opt" data-q="5" data-v="lover">Money lets me create beautiful, high-quality experiences</button>
+      <button class="opt" data-q="5" data-v="jester">Money should be fun to earn and fun to spend</button>
+      <button class="opt" data-q="5" data-v="everyman">Enough to live well and share with others</button>
+      <button class="opt" data-q="5" data-v="caregiver">I often undercharge — giving feels more natural</button>
+      <button class="opt" data-q="5" data-v="ruler">Wealth signals success and enables bigger impact</button>
+      <button class="opt" data-q="5" data-v="creator">I'll monetize my art, but creativity comes first</button>
+    </div>
+    <div class="nav">
+      <button class="btn" onclick="back(5)">← Back</button>
+      <button class="btn primary" id="n5" disabled onclick="next(5)">Next →</button>
+    </div>
+  </div>
+
+  <div class="step" id="s6">
+    <div class="q-label">Question 6 of 7</div>
+    <div class="q-text">When you imagine your personal brand online, what does your content feel like?</div>
+    <div class="options">
+      <button class="opt" data-q="6" data-v="innocent">Clean, positive, wholesome — no drama, good vibes</button>
+      <button class="opt" data-q="6" data-v="explorer">Raw, honest travel/journey content — I show the path</button>
+      <button class="opt" data-q="6" data-v="sage">In-depth, educational, analytical — I teach</button>
+      <button class="opt" data-q="6" data-v="hero">Motivational, ambitious — overcoming challenges</button>
+      <button class="opt" data-q="6" data-v="rebel">Provocative, contrarian — I challenge the status quo</button>
+      <button class="opt" data-q="6" data-v="magician">Visionary, inspiring — big ideas and transformations</button>
+      <button class="opt" data-q="6" data-v="lover">Beautiful, sensory, aesthetic — it looks and feels good</button>
+      <button class="opt" data-q="6" data-v="jester">Funny, playful, memes — people laugh and share</button>
+      <button class="opt" data-q="6" data-v="everyman">Relatable, conversational, down-to-earth</button>
+      <button class="opt" data-q="6" data-v="caregiver">Nurturing, empathetic — I support my audience</button>
+      <button class="opt" data-q="6" data-v="ruler">Premium, authoritative — I set the standard</button>
+      <button class="opt" data-q="6" data-v="creator">Unique, original, artistic — my own aesthetic</button>
+    </div>
+    <div class="nav">
+      <button class="btn" onclick="back(6)">← Back</button>
+      <button class="btn primary" id="n6" disabled onclick="next(6)">Next →</button>
+    </div>
+  </div>
+
+  <div class="step" id="s7">
+    <div class="q-label">Question 7 of 7</div>
+    <div class="q-text">Last one. Which business model excites you most deeply?</div>
+    <div class="options">
+      <button class="opt" data-q="7" data-v="innocent">Simple products/services that just work and feel good</button>
+      <button class="opt" data-q="7" data-v="explorer">Travel, lifestyle, or niche community business</button>
+      <button class="opt" data-q="7" data-v="sage">Courses, consulting, research, or thought leadership</button>
+      <button class="opt" data-q="7" data-v="hero">Coaching, performance, or results-driven service</button>
+      <button class="opt" data-q="7" data-v="rebel">Disruptive tech, social enterprise, or counter-culture brand</button>
+      <button class="opt" data-q="7" data-v="magician">High-transformation coaching, innovation, or tech</button>
+      <button class="opt" data-q="7" data-v="lover">Luxury brand, beauty, wellness, or hospitality</button>
+      <button class="opt" data-q="7" data-v="jester">Entertainment, events, games, or fun content</button>
+      <button class="opt" data-q="7" data-v="everyman">Community-driven, inclusive, everyday service</button>
+      <button class="opt" data-q="7" data-v="caregiver">Healthcare, therapy, social work, or support services</button>
+      <button class="opt" data-q="7" data-v="ruler">Agency, investment, law, or premium B2B</button>
+      <button class="opt" data-q="7" data-v="creator">Design, writing, music, art, or creative studio</button>
+    </div>
+    <div class="nav">
+      <button class="btn" onclick="back(7)">← Back</button>
+      <button class="btn primary" id="n7" disabled onclick="showResult()">See my archetype →</button>
+    </div>
+  </div>
+
+  <div class="result" id="result">
+    <div class="archetype-badge">Your archetype</div>
+    <div class="archetype-name" id="r-name"></div>
+    <div class="archetype-tagline" id="r-tagline"></div>
+    <hr class="divider">
+    <div class="section-title">Core traits</div>
+    <div class="trait-chips" id="r-traits"></div>
+    <div class="section-title">Business directions that fit you</div>
+    <div id="r-biz"></div>
+    <hr class="divider">
+    <div class="section-title">Your brand voice</div>
+    <div class="voice-card" id="r-voice"></div>
+    <button class="btn" onclick="restart()" style="width:100%; margin-top:0.5rem;">Take the quiz again</button>
+  </div>
+</div>
+
+<script>
+const answers = {};
+
+const archetypes = {
+  innocent: {
+    name: "The Innocent",
+    tagline: "You build trust through simplicity, goodness, and optimism. People feel safe with you — your brand is a refuge from complexity and chaos.",
+    traits: ["Honest","Optimistic","Pure","Simple","Trustworthy","Wholesome"],
+    biz: [
+      { title: "Wellness & natural products", desc: "Organic, clean, feel-good products. Think skincare, food, home goods." },
+      { title: "Education for children or families", desc: "Safe, nurturing learning environments with positive values." },
+      { title: "Simple SaaS or tools", desc: "Products that just work, are easy to use, and make life lighter." }
+    ],
+    voice: "Warm, honest, uncomplicated. No hype, no dark patterns. You say what you mean. Your brand feels like a breath of fresh air."
+  },
+  explorer: {
+    name: "The Explorer",
+    tagline: "You stand for freedom, authenticity, and discovering your own path. You're drawn to people who refuse to be boxed in.",
+    traits: ["Adventurous","Independent","Authentic","Restless","Curious","Pioneering"],
+    biz: [
+      { title: "Travel or lifestyle brand", desc: "Content, retreats, gear, or services for people who live unconventionally." },
+      { title: "Personal brand / creator", desc: "Document your own journey and build an audience around your path." },
+      { title: "Niche community or subscription", desc: "Bring together people who share an unconventional lifestyle or identity." }
+    ],
+    voice: "Authentic, unfiltered, wandering. You share real experiences — the highs and the hard parts. People follow you because you go first."
+  },
+  sage: {
+    name: "The Sage",
+    tagline: "You build authority through knowledge and truth. People come to you when they need to understand something deeply — not just a surface answer.",
+    traits: ["Analytical","Wise","Credible","Thoughtful","Expert","Objective"],
+    biz: [
+      { title: "Consulting or advisory", desc: "Specialized expertise that businesses or people pay a premium for." },
+      { title: "Online courses & education", desc: "Deep, well-researched content that genuinely teaches." },
+      { title: "Research, writing, or media", desc: "Newsletter, podcast, book — your thinking IS the product." }
+    ],
+    voice: "Precise, substantive, measured. You don't oversimplify or overpromise. People trust you because you respect their intelligence."
+  },
+  hero: {
+    name: "The Hero",
+    tagline: "You're driven to achieve, overcome, and prove what's possible. You attract people who want to level up and refuse to settle.",
+    traits: ["Courageous","Determined","Inspiring","Results-focused","Ambitious","Disciplined"],
+    biz: [
+      { title: "Coaching or performance services", desc: "Help clients achieve hard goals — fitness, business, mindset." },
+      { title: "Results-driven agency or consultancy", desc: "You deliver measurable outcomes. Clients pay for transformation." },
+      { title: "Brand around a challenge or movement", desc: "Rally people around a cause, mission, or ambitious goal." }
+    ],
+    voice: "Bold, motivating, direct. You push people forward. No fluff — just clarity, challenge, and proof that it's possible."
+  },
+  rebel: {
+    name: "The Rebel (Outlaw)",
+    tagline: "You exist to challenge the broken system. Your brand gives people permission to reject what doesn't serve them and build something new.",
+    traits: ["Disruptive","Bold","Provocative","Free-thinking","Passionate","Fearless"],
+    biz: [
+      { title: "Disruptive startup or challenger brand", desc: "Go up against incumbents with a radically different approach." },
+      { title: "Counter-culture content or community", desc: "Build an audience around a contrarian perspective that resonates." },
+      { title: "Social enterprise or activist brand", desc: "Use business as a vehicle for systemic change." }
+    ],
+    voice: "Raw, edgy, unapologetic. You say the things others are afraid to say. Your brand alienates some people — and deeply connects with others."
+  },
+  magician: {
+    name: "The Magician",
+    tagline: "You turn visions into reality. Your brand creates transformation — the before and after is dramatic, and people feel like something impossible just happened.",
+    traits: ["Visionary","Transformative","Charismatic","Inspiring","Innovative","Mysterious"],
+    biz: [
+      { title: "High-ticket transformation coaching", desc: "Deep, results-oriented personal or business transformation." },
+      { title: "Innovative tech or product", desc: "Technology that feels like magic — it does something no one thought possible." },
+      { title: "Spiritual, healing, or mindset brand", desc: "Shift people's reality from the inside out." }
+    ],
+    voice: "Visionary, evocative, slightly mysterious. You speak in possibilities and futures. People lean in because they sense you can see what they can't yet."
+  },
+  lover: {
+    name: "The Lover",
+    tagline: "You create desire. Your brand is about beauty, intimacy, sensory pleasure, and deep connection. People don't just buy from you — they crave you.",
+    traits: ["Passionate","Aesthetic","Sensual","Devoted","Intimate","Beautiful"],
+    biz: [
+      { title: "Luxury or premium brand", desc: "High-end products or experiences where the feeling is the product." },
+      { title: "Beauty, wellness, or hospitality", desc: "Anything that engages the senses and creates pleasure." },
+      { title: "Personal brand around beauty/lifestyle", desc: "Your eye for beauty and curation IS the product." }
+    ],
+    voice: "Rich, sensory, intimate. Every word is chosen for how it feels. Your brand is an experience, not just a message."
+  },
+  jester: {
+    name: "The Jester",
+    tagline: "You bring lightness, joy, and laughter to a world that takes itself too seriously. Your brand feels like the fun one at the party.",
+    traits: ["Playful","Witty","Spontaneous","Irreverent","Joyful","Creative"],
+    biz: [
+      { title: "Entertainment or content brand", desc: "Comedy, gaming, pop culture — make people laugh and come back for more." },
+      { title: "Fun consumer brand", desc: "Products with personality — the ones people share because they're delightful." },
+      { title: "Events or experiences", desc: "Create moments people remember because they had so much fun." }
+    ],
+    voice: "Witty, playful, unexpected. You zag when others zig. Memes, humor, and lightness are your tools. People follow you because you make their day better."
+  },
+  everyman: {
+    name: "The Everyman",
+    tagline: "You build belonging. Your brand is for everyone — unpretentious, real, and deeply relatable. People feel like you get them.",
+    traits: ["Relatable","Down-to-earth","Inclusive","Honest","Friendly","Unpretentious"],
+    biz: [
+      { title: "Community-driven brand or platform", desc: "Bring ordinary people together around a shared identity or interest." },
+      { title: "Everyday consumer goods or services", desc: "Quality products without the premium markup or attitude." },
+      { title: "Personal brand around real talk", desc: "Content that cuts through the noise with honesty and accessibility." }
+    ],
+    voice: "Conversational, real, zero ego. You talk like a friend, not a brand. People trust you because you never try to impress them."
+  },
+  caregiver: {
+    name: "The Caregiver",
+    tagline: "You nurture, protect, and support. Your brand makes people feel genuinely looked after — not like a customer, but like someone who matters.",
+    traits: ["Nurturing","Empathetic","Generous","Patient","Protective","Warm"],
+    biz: [
+      { title: "Healthcare, therapy, or wellness", desc: "Serve people at their most vulnerable with expertise and compassion." },
+      { title: "Coaching or mentoring", desc: "Long-term relationship-based support that sees the whole person." },
+      { title: "Social enterprise or nonprofit", desc: "Business as care — driven by impact over profit." }
+    ],
+    voice: "Warm, gentle, reassuring. Your brand says 'I see you and I've got you.' Never pushy — always present."
+  },
+  ruler: {
+    name: "The Ruler",
+    tagline: "You build empires. Your brand radiates authority, quality, and control. People come to you because they want the best — and you deliver.",
+    traits: ["Authoritative","Confident","Strategic","Premium","Responsible","Commanding"],
+    biz: [
+      { title: "Premium agency or professional services", desc: "Legal, financial, consulting — where expertise and reputation are everything." },
+      { title: "B2B or enterprise brand", desc: "Trusted by companies who can't afford to get it wrong." },
+      { title: "Luxury or prestige consumer brand", desc: "Top-of-category positioning where quality speaks for itself." }
+    ],
+    voice: "Confident, polished, authoritative. You set the standard. Less is more — your brand doesn't need to shout because it doesn't need to prove anything."
+  },
+  creator: {
+    name: "The Creator",
+    tagline: "You exist to make things that have never existed before. Your brand is your vision — and the world is better for it.",
+    traits: ["Imaginative","Original","Visionary","Skilled","Expressive","Driven"],
+    biz: [
+      { title: "Creative studio or agency", desc: "Design, writing, film, music — your taste and skill are the product." },
+      { title: "Product design or tech", desc: "Build something beautiful and original that fills a gap in the world." },
+      { title: "Personal brand around craft", desc: "Document your creative process — audiences love watching masters work." }
+    ],
+    voice: "Distinctive, original, intentional. Everything in your brand is considered. Your aesthetic IS your argument."
+  }
+};
+
+document.querySelectorAll('.opt').forEach(btn => {
+  btn.addEventListener('click', function() {
+    const q = this.dataset.q;
+    document.querySelectorAll('.opt[data-q="' + q + '"]').forEach(b => b.classList.remove('selected'));
+    this.classList.add('selected');
+    answers[q] = this.dataset.v;
+    document.getElementById('n' + q).disabled = false;
+  });
+});
+
+function updateProgress(step) {
+  document.getElementById('prog').style.width = ((step - 1) / 7 * 100) + '%';
+}
+
+function next(step) {
+  document.getElementById('s' + step).classList.remove('active');
+  document.getElementById('s' + (step + 1)).classList.add('active');
+  updateProgress(step + 1);
+  window.scrollTo(0, 0);
+}
+
+function back(step) {
+  document.getElementById('s' + step).classList.remove('active');
+  document.getElementById('s' + (step - 1)).classList.add('active');
+  updateProgress(step - 1);
+  window.scrollTo(0, 0);
+}
+
+function showResult() {
+  document.getElementById('s7').classList.remove('active');
+  document.getElementById('prog').style.width = '100%';
+
+  const counts = {};
+  Object.values(answers).forEach(v => { counts[v] = (counts[v] || 0) + 1; });
+  const top = Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0];
+  const a = archetypes[top];
+
+  document.getElementById('r-name').textContent = a.name;
+  document.getElementById('r-tagline').textContent = a.tagline;
+
+  const chips = document.getElementById('r-traits');
+  chips.innerHTML = '';
+  a.traits.forEach(t => {
+    const c = document.createElement('span');
+    c.className = 'chip';
+    c.textContent = t;
+    chips.appendChild(c);
+  });
+
+  const biz = document.getElementById('r-biz');
+  biz.innerHTML = '';
+  a.biz.forEach(b => {
+    biz.innerHTML += '<div class="biz-card"><div class="biz-title">' + b.title + '</div><div class="biz-desc">' + b.desc + '</div></div>';
+  });
+
+  document.getElementById('r-voice').textContent = a.voice;
+  document.getElementById('result').classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function restart() {
+  Object.keys(answers).forEach(k => delete answers[k]);
+  document.querySelectorAll('.opt').forEach(b => b.classList.remove('selected'));
+  document.querySelectorAll('[id^="n"]').forEach(b => { if (b.tagName === 'BUTTON') b.disabled = true; });
+  document.getElementById('result').classList.remove('active');
+  document.getElementById('s1').classList.add('active');
+  document.getElementById('prog').style.width = '0%';
+  window.scrollTo(0, 0);
+}
+</script>
+</body>
+</html>
